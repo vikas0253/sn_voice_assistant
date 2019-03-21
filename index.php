@@ -28,9 +28,12 @@ switch ($req_parameter['api-type']) {
 			  $response_array = explode ("<br/>", $response); 			  
 			  //print_r($response_array);
 			  foreach($response_array as $row){
-				  if (strpos($row, 'Build name:') !== false) {
-						echo $instance_desc .= $row;
-						break;
+				  if ((strpos($row, 'Build name:') !== false) || 
+					  (strpos($row, 'Processor transactions:') !== false) || 
+					  (strpos($row, 'Cancelled transactions:') !== false)
+					  ){
+						$instance_desc .= " ".$row.".";
+						//break;
 					}//if	
 			  }//for
 			}
