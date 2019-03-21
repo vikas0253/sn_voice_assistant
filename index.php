@@ -35,7 +35,7 @@ function processMessage($update) {
 		
         sendMessage(array(
             "source" => $update["responseId"],
-            "fulfillmentText"=>"Hello from webhook",
+            "fulfillmentText"=>$instance_details,
             "payload" => array(
                 "items"=>[
                     array(
