@@ -1,47 +1,87 @@
 <?php
-
-$req_parameter = $_REQUEST;
-//print_r($req_parameter['api-type']);
-$insttance = "https://dev72378.service-now.com";
-$curl = curl_init();
-
-
-
-switch ($req_parameter['api-type']) {
-    case "create-incident":      
-			curl_setopt_array($curl, array(
-			  CURLOPT_URL => $insttance."/stats.do",
-			  CURLOPT_RETURNTRANSFER => true,
-			  CURLOPT_CUSTOMREQUEST => "GET"			  
-			));
-
-			$response = curl_exec($curl);
-			$err = curl_error($curl);
-			$instance_desc = "";	
-
-			curl_close($curl);
-
-			if ($err) {
-			  echo "cURL Error #:" . $err;
-			} else {
-			  //echo $response;
-			  $response_array = explode ("<br/>", $response); 			  
-			  //print_r($response_array);
-			  foreach($response_array as $row){
-				  if ((strpos($row, 'Build name:') !== false) || 
-					  (strpos($row, 'Processor transactions:') !== false) || 
-					  (strpos($row, 'Cancelled transactions:') !== false)
-					  ){
-						$instance_desc .= " ".$row.".";
-						//break;
-					}//if	
-			  }//for
-			}
-			echo $instance_desc;
-        break;
-    
-    default:
-        echo "You are out of incidnent creation method";
+function processMessage($update) {
+    if($update["queryResult"]["action"] == "instance-details"){
+        sendMessage(array(
+            "source" => $update["responseId"],
+            "fulfillmentText"=>"Hello from webhook",
+            "payload" => array(
+                "items"=>[
+                    array(
+                        "simpleResponse"=>
+                    array(
+                        "textToSpeech"=>"response from host"
+                         )
+                    )
+                ],
+                ),
+           
+        ));
+    }else if($update["queryResult"]["action"] == "convert"){
+        if($update["queryResult"]["parameters"]["outputcurrency"] == "USD"){
+           $amount =  intval($update["queryResult"]["parameters"]["amountToConverte"]["amount"]);
+           $convertresult = $amount * 360;
+        }
+         sendMessage(array(
+            "source" => $update["responseId"],
+            "fulfillmentText"=>"The conversion result is".$convertresult,
+            "payload" => array(
+                "items"=>[
+                    array(
+                        "simpleResponse"=>
+                    array(
+                        "textToSpeech"=>"The conversion result is".$convertresult
+                         )
+                    )
+                ],
+                ),
+           
+        ));
+    }else{
+        sendMessage(array(
+            "source" => $update["responseId"],
+            "fulfillmentText"=>"Error",
+            "payload" => array(
+                "items"=>[
+                    array(
+                        "simpleResponse"=>
+                    array(
+                        "textToSpeech"=>"Bad request"
+                         )
+                    )
+                ],
+                ),
+           
+        ));
+        
+    }
 }
-
+ 
+function sendMessage($parameters) {
+    echo json_encode($parameters);
+}
+ 
+$update_response = file_get_contents("php://input");
+$update = json_decode($update_response, true);
+if (isset($update["queryResult"]["action"])) {
+    processMessage($update);
+    $myfile = fopen("newfile.txt", "w") or die("Unable to open file!");
+   fwrite($myfile, $update["queryResult"]["action"]);
+    fclose($myfile);
+}else{
+     sendMessage(array(
+            "source" => $update["responseId"],
+            "fulfillmentText"=>"Hello from webhook",
+            "payload" => array(
+                "items"=>[
+                    array(
+                        "simpleResponse"=>
+                    array(
+                        "textToSpeech"=>"Bad request"
+                         )
+                    )
+                ],
+                ),
+           
+        ));
+}
 ?>
