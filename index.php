@@ -37,10 +37,9 @@ function processMessage($update) {
 		$input_parameter = $update["queryResult"]["parameters"];
 		$severity 	= $input_parameter['severity'];
 		$desc 		= $input_parameter['desc'];
-		$fulfillmentText = createIncident($severity,$desc);
-		print_r($fulfillmentText);exit;
+		$fulfillmentText = createIncident($severity,$desc);		
     }else{
-		
+		$fulfillmentText = "Error";
         
         
     }
