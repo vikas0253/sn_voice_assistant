@@ -1,6 +1,6 @@
 <?php
 
-define("INSTANCE",     "https://dev72378.service-now.com");
+include("config.php");
 
 
 $update_response = file_get_contents("php://input");
@@ -31,11 +31,22 @@ if (isset($update["queryResult"]["action"])) {
 
 function processMessage($update) {
     if($update["queryResult"]["action"] == "instance-details"){
-		$instance_details = getInstnaceDetails();
+		$fulfillmentText = getInstnaceDetails();		
+      
+    }else if($update["queryResult"]["action"] == "create-incident"){
+		$input_parameter = $update["queryResult"]["parameters"];
+		$severity 	= $input_parameter['severity'];
+		$desc 		= $input_parameter['desc'];
+		$fulfillmentText = createIncident($severity,$desc);
+		print_r($fulfillmentText);exit;
+    }else{
 		
-        sendMessage(array(
+        
+        
+    }
+	  sendMessage(array(
             "source" => $update["responseId"],
-            "fulfillmentText"=>$instance_details,
+            "fulfillmentText"=>$fulfillmentText,
             "payload" => array(
                 "items"=>[
                     array(
@@ -48,44 +59,6 @@ function processMessage($update) {
                 ),
            
         ));
-    }else if($update["queryResult"]["action"] == "convert"){
-        if($update["queryResult"]["parameters"]["outputcurrency"] == "USD"){
-           $amount =  intval($update["queryResult"]["parameters"]["amountToConverte"]["amount"]);
-           $convertresult = $amount * 360;
-        }
-         sendMessage(array(
-            "source" => $update["responseId"],
-            "fulfillmentText"=>"The conversion result is".$convertresult,
-            "payload" => array(
-                "items"=>[
-                    array(
-                        "simpleResponse"=>
-                    array(
-                        "textToSpeech"=>"The conversion result is".$convertresult
-                         )
-                    )
-                ],
-                ),
-           
-        ));
-    }else{
-        sendMessage(array(
-            "source" => $update["responseId"],
-            "fulfillmentText"=>"Error",
-            "payload" => array(
-                "items"=>[
-                    array(
-                        "simpleResponse"=>
-                    array(
-                        "textToSpeech"=>"Bad request"
-                         )
-                    )
-                ],
-                ),
-           
-        ));
-        
-    }
 }
  
 function sendMessage($parameters) {
@@ -141,11 +114,44 @@ function getInstnaceDetails(){
 			  }//for
 			}
 			
-			//The build name is - London. Currently, total transcation processing are - 32 and cancelled - 0.
-			//$instance_desc = "The instance name is ".$instance_name." and the version is ".$insance_version." Currently, total ".$processing."  transactions  are processing and ".$cancelled." are cancelled;
-			
 			$instance_desc = "The instance name is".$instance_name." and the version is".$insance_version." . Currently, total".$processing." transactions are processing and".$cancelled." are cancelled.";
 			return $instance_desc;
 }
 
+
+function createIncident($sev,$desc){
+
+	$curl = curl_init();
+	$number = 0;
+	curl_setopt_array($curl, array(
+	  CURLOPT_URL => INSTANCE."/api/now/table/incident",
+	  CURLOPT_USERPWD => USERNAME . ":" . PASSWORD,
+	  CURLOPT_RETURNTRANSFER => true,
+	  CURLOPT_ENCODING => "",
+	  CURLOPT_MAXREDIRS => 10,
+	  CURLOPT_TIMEOUT => 30,
+	  CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+	  CURLOPT_CUSTOMREQUEST => "POST",
+	  CURLOPT_POSTFIELDS => "{\"severity\":\"$sev\",\"description\":\"$desc\"}",
+	  CURLOPT_HTTPHEADER => array(
+		"authorization: Basic YWRtaW46VmlrYXNAMTIz",
+		"content-type: application/json",		
+	  ),
+	));
+
+	$response = curl_exec($curl);
+	$err = curl_error($curl);
+
+
+	curl_close($curl);
+
+	if ($err) {
+	  echo "cURL Error #:" . $err;
+	} else {
+	  $response_json = json_decode($response);
+	  $number = $response_json->result->number;	  
+	}
+	
+	return "Incident has been created for you. The number is ->".$number;
+}
 ?>
