@@ -133,7 +133,7 @@ function createIncident($sev,$desc){
 	  CURLOPT_CUSTOMREQUEST => "POST",
 	  CURLOPT_POSTFIELDS => "{\"severity\":\"$sev\",\"short_description\":\"$desc\"}",
 	  CURLOPT_HTTPHEADER => array(
-		"authorization: Basic YWRtaW46VmlrYXNAMTIz",
+		
 		"content-type: application/json",		
 	  ),
 	));
