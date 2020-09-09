@@ -1,8 +1,9 @@
 <?php
 
-define("INSTANCE",     "https://dev69307.service-now.com");
+define("INSTANCE",     "https://dev78376.service-now.com");
 define("USERNAME",     "admin");
-define("PASSWORD",     "dEASYf6m9Wmv");
+define("PASSWORD",     "POC@123");
+
 
 
 ?>
